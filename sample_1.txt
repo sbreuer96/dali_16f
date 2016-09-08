@@ -1,0 +1,119 @@
+//Database for app I created with friends called “Cheers” where a friend
+//can send other friends drinks that they can then redeem.
+//This handles database of friends using SQLite
+
+
+public class FriendsDatabaseHelper extends SQLiteOpenHelper {
+
+    public static final String TABLE_NAME_ENTRIES = "entries";
+    public static final String KEY_ROW_ID = "_id";
+    public static final String KEY_FRIEND_NAME = "name";
+    public static final String KEY_FRIEND_EMAIL = "email";
+    public static final String KEY_FRIEND_PICTURE = "pic";
+    private Context c;
+
+    private static final String DATABASE_NAME = "friends.db";
+    private static final int DATABASE_VERSION = 1;
+
+    private static final String CREATE_TABLE_ENTRIES = "CREATE TABLE IF NOT EXISTS "
+            + TABLE_NAME_ENTRIES
+            + " ("
+            + KEY_ROW_ID
+            + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + KEY_FRIEND_EMAIL
+            + " STRING NOT NULL, "
+            + KEY_FRIEND_NAME
+            + " STRING NOT NULL, "
+            + KEY_FRIEND_PICTURE
+            + " INTEGER NOT NULL " + ");";
+
+    String[] columns = new String[]{KEY_ROW_ID, KEY_FRIEND_EMAIL, KEY_FRIEND_NAME,KEY_FRIEND_PICTURE,};
+    private SQLiteDatabase db;
+    private static final String DELETE_DATABASE = "DROP TABLE IF EXISTS" + DATABASE_NAME;
+
+    public FriendsDatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        c = context;
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int a, int b){
+        db.execSQL(DELETE_DATABASE);
+        onCreate(db);
+    }
+
+    /**
+     * Creates the table if it doesn't already exist
+     * @param db passes in a SQLite database
+     */
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(CREATE_TABLE_ENTRIES);
+        Log.d("message", "hello");
+    }
+
+
+    public long insertUser(User user) {
+        ArrayList<User> users = fetchUsers();
+        boolean repeat = false;
+        for(int i = 0; i < users.size(); i++){
+            User u = users.get(i);
+            if(user.getmEmail().equals(u.getmEmail()))
+                repeat = true;
+        }
+        if (repeat == false) {
+            ContentValues values = new ContentValues();
+            values.put(KEY_FRIEND_NAME, user.getmName());
+            values.put(KEY_FRIEND_EMAIL, user.getmEmail());
+            values.put(KEY_FRIEND_PICTURE, user.getmImageId());
+
+
+//        values.put(KEY_REDEEM,entry.getmRedeemable());
+
+            SQLiteDatabase db = this.getWritableDatabase();
+            return db.insert(TABLE_NAME_ENTRIES, null, values);
+        }
+        else{
+            return -5;
+        }
+    }
+
+
+    /**
+     * Removes an entry from the database by accessing its id
+     * @param id the sql id of the entry
+     */
+    public void removeEntry(long id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_NAME_ENTRIES, KEY_ROW_ID + " = " + id, null);
+    }
+
+
+    public void removeAllEntries() {
+        // todo: implement
+    }
+
+
+    public User fetchEntryByIndex(long rowId) {
+        return new User();
+    }
+
+
+    public ArrayList<User> fetchUsers(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.query(TransactionDatabaseHelper.TABLE_NAME_ENTRIES, columns, null, null, null, null, null);
+        ArrayList<User> users = new ArrayList<>();
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()){
+            User user = new User();
+            user.setmEmail(cursor.getString(1));
+            user.setmName(cursor.getString(2));
+            user.setmImageId(cursor.getInt(3));
+            users.add(user);
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return users;
+
+    }
+}

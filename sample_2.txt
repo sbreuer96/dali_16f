@@ -1,0 +1,383 @@
+//Android activity that handles menus. The concept behind the app is that a friend can send you a drink and you then redeem it. 
+//We created a series of menus for Hanover locations.
+
+
+public class MenuActivity extends Activity {
+
+    public static Transaction transaction;
+    public Menu menu;
+    String name1;
+    String email1;
+    String name2;
+    String email2;
+    String restaurant;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.menu);
+        Intent i = getIntent();
+        name1 = i.getStringExtra("name1");
+        email1 = i.getStringExtra("email1");
+        name2 = i.getStringExtra("name2");
+        email2 = i.getStringExtra("email2");
+        restaurant = i.getStringExtra("restaurant");
+
+
+        Drink bud = new Drink("Budweiser",3.00);
+        Drink corona = new Drink("Corona",3.00);
+        Drink guinness = new Drink("Guinness",4.00);
+
+        menu = new Menu();
+        menu.addDrink(bud);
+        menu.addDrink(corona);
+        menu.addDrink(guinness);
+
+        final ArrayList<String> menu_items = new ArrayList<>();
+
+        final ArrayList<Drink> beerList = getBeerList(restaurant);
+        final ArrayList<Drink> wineList = getWineList(restaurant);
+        final ArrayList<Drink> mixedList = getMixedList(restaurant);
+
+        //set them depending on what was pressed
+
+        for(Drink a: menu.getDrinks()) {
+            menu_items.add(a.getmName());
+        }
+        ListView beer = (ListView) findViewById(R.id.list1);
+
+        beer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                getConfirmation(beerList.get(position).getmName(),beerList.get(position).getmCost());
+                Log.d("touch", "wine");
+            }
+        });
+        MenuAdapter beerAd = new MenuAdapter(this, beerList);
+        beer.setAdapter(beerAd);
+        setListViewHeightBasedOnChildren(beer);
+
+        ListView wine = (ListView) findViewById(R.id.list2);
+
+        wine.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                getConfirmation(wineList.get(position).getmName(),wineList.get(position).getmCost());
+                Log.d("touch", "wine");
+            }
+        });
+        MenuAdapter wineAd = new MenuAdapter(this, wineList);
+        wine.setAdapter(wineAd);
+        setListViewHeightBasedOnChildren(wine);
+
+        ListView mixed = (ListView) findViewById(R.id.list3);
+
+        mixed.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                getConfirmation(mixedList.get(position).getmName(),mixedList.get(position).getmCost());
+            }
+        });
+
+        MenuAdapter mixedAd = new MenuAdapter(this, mixedList);
+        mixed.setAdapter(mixedAd);
+        setListViewHeightBasedOnChildren(mixed);
+
+        // Define a new adapter
+        ArrayAdapter<String> mAdapter = new ArrayAdapter<String>(this,
+                R.layout.menu, menu_items);
+
+        // Assign the adapter to ListView
+        //setListAdapter(mAdapter);
+
+        // Define the listener interface
+        AdapterView.OnItemClickListener mListener = new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                Drink drink = menu.getDrinks().get(position);
+                transaction.setmDrink(drink);
+                Intent i = new Intent(MenuActivity.this,TransactionActivity.class);
+                i.putExtra("sender",transaction.getmSender().getmName());
+                i.putExtra("recipient",transaction.getmRecipient().getmName());
+                i.putExtra("establishment",transaction.getmEstablishment().getmName());
+                i.putExtra("drink",drink.getmName());
+                i.putExtra("cost",drink.getmCost());
+                startActivity(i);
+
+            }
+        };
+
+        // Get the ListView and wired the listener
+        //ListView listView = getListView();
+        //listView.setOnItemClickListener(mListener);
+    }
+
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null)
+            return;
+
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.UNSPECIFIED);
+        int totalHeight = 0;
+        View view = null;
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            view = listAdapter.getView(i, view, listView);
+            if (i == 0)
+                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            view.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += view.getMeasuredHeight();
+        }
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
+    }
+
+    public void getConfirmation(String drink, double cost){
+        Intent i = new Intent(this,ConfirmationActivity.class);
+        i.putExtra("name1",name1);
+        i.putExtra("name2",name2);
+        i.putExtra("email1",email1);
+        i.putExtra("email2",email2);
+
+
+        i.putExtra("restaurant",restaurant);
+        i.putExtra("drink",drink);
+        i.putExtra("cost",cost+"");
+        startActivity(i);
+    }
+
+
+    public ArrayList<Drink> getBeerList(String restaurant){
+        ArrayList<Drink> beerList = new ArrayList<Drink>();
+        if(restaurant.equals("Pine")) {
+            //this is the format for adding, just put name of drink and price for each
+            //type if it's beer in this section, etc, based on the restaurant
+            beerList.add(new Drink("Long Trail Ale", 5.00));
+            beerList.add(new Drink("Switchback Ale", 5.00));
+            beerList.add(new Drink("Henniker \"Miles & Miles\" Pale Ale", 5.50));
+            beerList.add(new Drink("Allagash White", 5.50));
+            beerList.add(new Drink("Harpoon IPA", 5.00));
+            beerList.add(new Drink("Great North Brewery IPA", 5.25));
+            beerList.add(new Drink("Stone \"Arrogant Bastard\"", 6.00));
+            beerList.add(new Drink("Dogfish Head \"60 Minute IPA\"", 5.50));
+            beerList.add(new Drink("Smuttynose Robust Porter", 5.00));
+            beerList.add(new Drink("North Coast \"Old Rasputin Imperial Stout\"", 6.50));
+            beerList.add(new Drink("Founders \"Mosaic Promise\"", 6.00));
+            beerList.add(new Drink("Stella Artois", 5.50));
+
+        }
+
+        if(restaurant.equals("Salt Hill Pub")){
+            beerList.add(new Drink("Stella", 5.50));
+            beerList.add(new Drink("Long Trail Ale", 5.00));
+            beerList.add(new Drink("Switchback Ale", 5.00));
+            beerList.add(new Drink("Henniker \"Miles & Miles\" Pale Ale", 5.50));
+            beerList.add(new Drink("Allagash White", 5.50));
+            beerList.add(new Drink("Harpoon IPA", 5.00));
+            beerList.add(new Drink("Great North Brewery IPA", 5.25));
+            beerList.add(new Drink("Stone \"Arrogant Bastard\"", 6.00));
+            beerList.add(new Drink("Dogfish Head \"60 Minute IPA\"", 5.50));
+            beerList.add(new Drink("Smuttynose Robust Porter", 5.00));
+            beerList.add(new Drink("North Coast \"Old Rasputin Imperial Stout\"", 6.50));
+            beerList.add(new Drink("Founders \"Mosaic Promise\"", 6.00));
+
+        }
+
+        if(restaurant.equals("Murphys")){
+            beerList.add(new Drink("Left Hand Milk Stout Nitro", 6.00));
+            beerList.add(new Drink("Long Trail Ale", 5.00));
+            beerList.add(new Drink("Switchback Pale Ale", 4.75));
+            beerList.add(new Drink("Harpoon IPA", 5.00));
+            beerList.add(new Drink("Harpoon UFO White", 5.00));
+            beerList.add(new Drink("Lagunitas IPA", 5.25));
+            beerList.add(new Drink("Lagunitas Rotating Line", 5.25));
+            beerList.add(new Drink("Coors Light", 3.25));
+            beerList.add(new Drink("Down East Cider", 5.00));
+            beerList.add(new Drink("Bottle of Budweiser", 3.50));
+            beerList.add(new Drink("Bottle of Bud Light", 3.50));
+            beerList.add(new Drink("Bottle of Corona", 4.25));
+            beerList.add(new Drink("Bottle of Heineken", 4.25));
+            beerList.add(new Drink("Bottle of St Pauli Girl N/A", 4.25));
+        }
+
+        if(restaurant.equals("Mollys")){
+            beerList.add(new Drink("Pint of Sam Adams Rebel IPA", 6.00));
+            beerList.add(new Drink("Pint of Harpoon UFO", 5.00));
+            beerList.add(new Drink("Pint of Switchback", 5.00));
+            beerList.add(new Drink("Pint of Von Trapp Trosten", 6.00));
+            beerList.add(new Drink("Pint of Long Trail Ale", 5.00));
+            beerList.add(new Drink("Pint of Long Trail Limbo IPA", 6.00));
+            beerList.add(new Drink("Pint of Baxter IPA", 6.00));
+            beerList.add(new Drink("Pint of Sam Adams Cold Snap", 5.00));
+            beerList.add(new Drink("Pint of Lagunitas IPA", 5.00));
+            beerList.add(new Drink("Pint of Bud Light", 4.00));
+            beerList.add(new Drink("Pint of Peak IPA", 6.00));
+            beerList.add(new Drink("Pint of Guinness", 6.00));
+            beerList.add(new Drink("Bottle of Samuel Adams Boston Lager", 5.00));
+            beerList.add(new Drink("Bottle of Ommegang Three Philosophers (22 oz.)", 13.00));
+            beerList.add(new Drink("Bottle of Omission Gluten Free Pale Ale", 5.00));
+            beerList.add(new Drink("Bottle of Southern Tier 2X IPA", 7.00));
+            beerList.add(new Drink("Bottle of Blue Point Hoptical Illusion IPA", 5.00));
+            beerList.add(new Drink("Bottle of Angry Orchard", 5.00));
+            beerList.add(new Drink("Bottle of Stoneface IPA", 8.00));
+            beerList.add(new Drink("Bottle of Downeast Cranberry", 5.00));
+            beerList.add(new Drink("Bottle of BBC Coffee House Porter (22 oz.)", 7.00));
+            beerList.add(new Drink("Bottle of 603 Waterville Wheat Ale", 5.00));
+            beerList.add(new Drink("Bottle of Sierra Nevada Beer Camp Tropical IPA", 6.00));
+            beerList.add(new Drink("Bottle of Switchback Brown", 7.00));
+            beerList.add(new Drink("Bottle of Left Hand Nitro Coffee Porter", 5.00));
+            beerList.add(new Drink("Bottle of Six Point Hi-Res (10.5%)", 7.00));
+        }
+        return beerList;
+    }
+
+    public ArrayList<Drink> getWineList(String restaurant){
+        ArrayList<Drink> wineList = new ArrayList<Drink>();
+        if(restaurant.equals("Pine")) {
+            wineList.add(new Drink("Prosecco, Zardetto \"Brut\"", 10.00));
+            wineList.add(new Drink("Chardonnay/Pinot Noir, Rogederer Estate \"Brut\"", 14.00));
+            wineList.add(new Drink("Chardonnay, A to Z", 14.00));
+            wineList.add(new Drink("Chardonnay, Wild Oats", 11.00));
+            wineList.add(new Drink("Vinho Verde, Casal Garcia", 9.00));
+            wineList.add(new Drink("Sauvignon Blanc, Villa Maria", 9.00));
+            wineList.add(new Drink("Pinot Grigio, Prendo", 9.00));
+            wineList.add(new Drink("Rosé of Cinsault/Grenache, Chateau Saint Pierre", 14.00));
+            wineList.add(new Drink("Pinot Noir, MacMurray Estate", 13.00));
+            wineList.add(new Drink("Pinot Noir, Steele", 11.00));
+            wineList.add(new Drink("Malbec, Catena \"Vista Flores\"", 12.00));
+            wineList.add(new Drink("Cabernet Sauvignon, Buried Crane", 10.00));
+            wineList.add(new Drink("Cabernet Sauvignon", 14.00));
+            wineList.add(new Drink("Garnacha/Syrah, Domaine \"La Garrigue\"", 14.00));
+            wineList.add(new Drink("Zinfandel, Edmeades", 11.00));
+            wineList.add(new Drink("Petit Verdot/Cabernet Franc, Chaman", 15.00));
+        }
+        if(restaurant.equals("Salt Hill Pub")){
+            wineList.add(new Drink("Glass of Corbel Brut Champagne", 9.50));
+            wineList.add(new Drink("Bottle of Corbel Brut Champagne", 36.00));
+            wineList.add(new Drink("Glass of Kenwood Sauvignon Blanc", 8.50));
+            wineList.add(new Drink("Bottle of Kenwood Sauvignon Blanc", 32.00));
+            wineList.add(new Drink("Bottle of Kim Crawford Sauvignon Blanc", 44.00));
+            wineList.add(new Drink("Glass of Mezzacorona Pinot Grigio", 7.50));
+            wineList.add(new Drink("Bottle of Mezzacorona Pinot Grigio", 28.00));
+            wineList.add(new Drink("Bottle of Banfi San Angelo Pinot Grigio", 44.00));
+            wineList.add(new Drink("Glass of Pacific Rim Riesling", 8.00));
+            wineList.add(new Drink("Bottle of Pacific Rim Riesling", 30.00));
+            wineList.add(new Drink("Glass of Kendall-Jackson Chardonnay", 9.00));
+            wineList.add(new Drink("Bottle of Kendall-Jackson Chardonnay", 34.00));
+            wineList.add(new Drink("Bottle of Bonterra Organic Chardonnay", 44.00));
+            wineList.add(new Drink("Glass of Clos Du Bois Pinot Noir", 8.50));
+            wineList.add(new Drink("Bottle of Clos Du Bois Pinot Noir", 32.00));
+            wineList.add(new Drink("Bottle of Wild Horse Pinot Noir", 44.00));
+            wineList.add(new Drink("Glass of Septima Malbec", 8.50));
+            wineList.add(new Drink("Bottle of Septima Malbec", 32.00));
+            wineList.add(new Drink("Glass of St. Francis \"Old Vines\" Zinfandel", 9.50));
+            wineList.add(new Drink("Bottle of St. Francis \"Old Vines\" Zinfandel", 36.00));
+            wineList.add(new Drink("Glass of Estancia Merlot", 9.50));
+            wineList.add(new Drink("Bottle of Estancia Merlot", 36.00));
+            wineList.add(new Drink("Glass of Casillero Del Diablo Cabernet Sauvignon", 7.50));
+            wineList.add(new Drink("Bottle of Casillero Del Diablo Cabernet Sauvignon", 28.00));
+            wineList.add(new Drink("Glass of Spellbound Cabernet Sauvignon", 9.50));
+            wineList.add(new Drink("Bottle of Spellbound Cabernet Sauvignon", 36.00));
+        }
+        if(restaurant.equals("Murphys")){
+            wineList.add(new Drink("Glass of Oyster Bay Sauvignon Blanc", 10.50));
+            wineList.add(new Drink("Bottle of Oyster Bay Sauvignon Blanc", 42.00));
+            wineList.add(new Drink("Glass of Pavao Vinho Verde", 9.00));
+            wineList.add(new Drink("Bottle of Pavao Vinho Verde", 36.00));
+            wineList.add(new Drink("Glass of Riff Pinot Grigio", 9.00));
+            wineList.add(new Drink("Bottle of Riff Pinot Grigio", 36.00));
+            wineList.add(new Drink("Glass of Layer Cake Chardonnay", 11.00));
+            wineList.add(new Drink("Bottle of Layer Cake Chardonnay", 44.00));
+            wineList.add(new Drink("Glass of J. Lohr Chardonnay", 8.50));
+            wineList.add(new Drink("Bottle of J. Lohr Chardonnay", 34.00));
+            wineList.add(new Drink("Bottle of Rombauer Chardonnay", 60.00));
+            wineList.add(new Drink("Glass of Etude Lyric Pinot Noir", 12.00));
+            wineList.add(new Drink("Bottle of Etude Lyric Pinot Noir", 48.00));
+            wineList.add(new Drink("Glass of Francis Coppola Pinot Noir", 10.00));
+            wineList.add(new Drink("Bottle of Francis Coppola Pinot Noir", 40.00));
+            wineList.add(new Drink("Bottle of Benton Lane Pinot Noir", 55.00));
+            wineList.add(new Drink("Glass of La Puerta Malbec", 8.50));
+            wineList.add(new Drink("Bottle of La Puerta Malbec", 34.00));
+            wineList.add(new Drink("Bottle of Seghesio Zinfandel", 50.00));
+            wineList.add(new Drink("Glass of Dreaming Tree Cabernet Sauvignon", 10.00));
+            wineList.add(new Drink("Bottle of Dreaming Tree Cabernet Sauvignon", 40.00));
+            wineList.add(new Drink("Glass of Cannonball Cabernet Sauvignon", 12.00));
+            wineList.add(new Drink("Bottle of Cannonball Cabernet Sauvignon", 48.00));
+            wineList.add(new Drink("Bottle of Michael David Freak Show Cabernet Sauvignon", 50.00));
+            wineList.add(new Drink("Split of Cristalino Brut", 9.00));
+            wineList.add(new Drink("Split of Lunette Prosecco Brut", 10.00));
+            wineList.add(new Drink("Bottle of Piper Sonoma Brut", 35.00));
+            wineList.add(new Drink("Bottle of Moet & Chandon Imperial", 80.00));
+            wineList.add(new Drink("Verve Clicquot Brut Gold Label", 130.00));
+        }
+        if(restaurant.equals("Mollys")){
+            wineList.add(new Drink("Glass of Las Mulas Cabernet Sauvignon - Chile", 11.00));
+            wineList.add(new Drink("Bottle of Las Mulas Cabernet Sauvignon - Chile", 33.00));
+            wineList.add(new Drink("Glass of Callia Alta Malbec - Argentina", 9.00));
+            wineList.add(new Drink("Glass of Callia Alta Malbec - Argentina", 27.00));
+            wineList.add(new Drink("Glass of Seaglass Sauvignon Blanc - New Zealand", 10.00));
+            wineList.add(new Drink("Bottle of Seaglass Sauvignon Blanc - New Zealand", 30.00));
+            wineList.add(new Drink("Glass of Garda Pinot Grigio - Italy", 9.00));
+            wineList.add(new Drink("Bottle of Garda Pinot Grigio - Italy", 27.00));
+        }
+        return wineList;
+    }
+
+    public ArrayList<Drink> getMixedList(String restaurant){
+        ArrayList<Drink> mixedList = new ArrayList<Drink>();
+
+        if(restaurant.equals("Pine")) {
+            mixedList.add(new Drink("Opening Night", 11.00));
+            mixedList.add(new Drink("Different Light", 10.00));
+            mixedList.add(new Drink("Double Helix", 9.00));
+            mixedList.add(new Drink("Gin & Bird", 12.00));
+            mixedList.add(new Drink("Arrow in the Gale", 10.00));
+            mixedList.add(new Drink("Smoke and Flowers", 10.00));
+            mixedList.add(new Drink("Trade Winds", 11.00));
+            mixedList.add(new Drink("Sojourner", 13.00));
+            mixedList.add(new Drink("Accidental City", 11.00));
+            mixedList.add(new Drink("Empire Hours", 10.00));
+            mixedList.add(new Drink("Heart of Oak", 13.00));
+            mixedList.add(new Drink("Lost Nation", 12.00));
+            mixedList.add(new Drink("The Extraordinary Fencer", 10.00));
+            mixedList.add(new Drink("Vixen’s Heart", 13.00));
+            mixedList.add(new Drink("Burning the Days", 9.00));
+            mixedList.add(new Drink("Wheelock Toddy", 10.00));
+            mixedList.add(new Drink("French 75", 11.00));
+            mixedList.add(new Drink("Pisco Punch", 10.00));
+            mixedList.add(new Drink("Oak Aged Negroni", 10.00));
+            mixedList.add(new Drink("Northern Standard Manhattan", 11.00));
+            mixedList.add(new Drink("PINE Old Fashioned", 10.00));
+        }
+        if(restaurant.equals("Salt Hill Pub")){
+            mixedList.add(new Drink("Limoncello-Tini", 9.00));
+            mixedList.add(new Drink("Tropical-TIni", 10.00));
+            mixedList.add(new Drink("Black Cherry Martini", 9.00));
+            mixedList.add(new Drink("Different Light", 10.00));
+            mixedList.add(new Drink("Double Helix", 9.00));
+            mixedList.add(new Drink("Gin & Bird", 12.00));
+        }
+        if(restaurant.equals("Murphys")){
+            mixedList.add(new Drink("Limoncello-Tini", 9.00));
+            mixedList.add(new Drink("Tropical-TIni", 10.00));
+            mixedList.add(new Drink("Black Cherry Martini", 9.00));
+            mixedList.add(new Drink("Different Light", 10.00));
+            mixedList.add(new Drink("Double Helix", 9.00));
+            mixedList.add(new Drink("Gin & Bird", 12.00));
+        }
+
+        if(restaurant.equals("Mollys")){
+            mixedList.add(new Drink("Glass of Winter Spice Sangria", 7.50));
+            mixedList.add(new Drink("Pitcher of Winter Spice Sangria", 30.00));
+            mixedList.add(new Drink("Limoncello-Tini", 9.00));
+            mixedList.add(new Drink("Tropical-TIni", 10.00));
+            mixedList.add(new Drink("Black Cherry Martini", 9.00));
+            mixedList.add(new Drink("Jalepeno Pineapple Margarita", 10.00));
+            mixedList.add(new Drink("Bourbon Cider", 8.00));
+        }
+
+        return mixedList;
+    }
+}
